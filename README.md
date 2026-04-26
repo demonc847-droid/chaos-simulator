@@ -1,58 +1,41 @@
 # Chaos Simulator
 
-A small Python/Pygame survival simulation where simple agents move around an arena, search for food, manage energy, and try to stay alive.
+**Chaos Simulator** is a small Python/Pygame survival sandbox where simple agents move through an arena, search for food, manage energy, and react to unpredictable rule changes.
 
-## File Structure
+It is currently a **V1 prototype**: playable, readable, and built to be easy to expand.
 
-```text
-chaos_simulator/
-├── main.py      # Starts Pygame, runs the main loop, updates and draws objects
-├── settings.py  # Project constants like screen size, FPS, colors, AI values
-├── agent.py     # Agent class, random spawning, movement, drawing, survival stats
-├── food.py      # Food class, random spawning, collision detection, respawning
-├── ai.py        # Agent decision-making: seek food, wander, avoid walls
-├── chaos.py     # Random rule-changing system
-├── ui1.py       # Separate debug window with FPS, counts, and chaos info
-├── ui2.py       # Separate agent monitor window with health and energy stats
-└── utils.py     # Small helper functions
+## Highlights
+
+- Survival agents with health, energy, velocity, colors, and ID labels.
+- Square food pickups that restore health and energy.
+- Simple AI: agents wander, hunt food when hungry, and bounce away from walls.
+- Chaos rules that change the simulation every `30-60` seconds.
+- Manual chaos trigger with the `C` key or the debug UI button.
+- Separate debug windows so stats do not cover the main simulation.
+- FPS-friendly UI refresh throttling for larger agent counts.
+
+## Demo Behavior
+
+When you run the project, three windows open:
+
+- **Main Pygame window**: the arena, agents, food, and movement.
+- **Debug window**: FPS, agent count, food count, current chaos rule, and next rule timer.
+- **Agent monitor**: top-energy agent plus health and energy stats for each agent.
+
+## Installation
+
+Create a virtual environment and install dependencies:
+
+```bash
+python3 -m venv venv
+venv/bin/python -m pip install -r requirements.txt
 ```
 
-## Getting Started
-
-Run the project with:
+Run the simulator:
 
 ```bash
 venv/bin/python main.py
 ```
-
-If you do not have the virtual environment yet, create it and install Pygame:
-
-```bash
-python3 -m venv venv
-venv/bin/python -m pip install pygame
-```
-
-## Project Idea
-
-The goal is to build a simulation where agents survive by collecting food while the rules of the world randomly change over time. The `chaos.py` module controls events such as speed changes, food energy changes, friction changes, and more random movement.
-
-## Current Features
-
-- Opens an `800x600` Pygame window.
-- Draws a simple arena with red boundaries and a subtle background grid.
-- Spawns agents randomly inside the arena.
-- Gives each agent a position, velocity, health, energy, color, and name.
-- Draws agents as moving circles with ID numbers above them.
-- Spawns food randomly inside the arena.
-- Draws food as square shapes so it is easy to tell apart from agents.
-- Detects when agents touch food.
-- Restores agent health and energy when food is eaten.
-- Respawns food after it is collected.
-- Uses simple AI so agents wander when full, seek nearby food when hungry, and bounce away from walls.
-- Changes a chaos rule automatically every `30-60` seconds.
-- Supports manual chaos with the `C` key or the debug window button.
-- Opens two separate UI windows so stats do not cover the main simulation.
-- Throttles external UI updates for better FPS with larger agent counts.
 
 ## Controls
 
@@ -61,22 +44,72 @@ C      Trigger a chaos rule immediately
 Close  Quit the main Pygame window
 ```
 
-## Performance Notes
+## Project Structure
 
-The external debug windows update a few times per second instead of every frame. You can tune this in `settings.py` with:
+```text
+chaos_simulator/
+├── main.py           # Starts Pygame and runs the main loop
+├── settings.py       # Project tuning: FPS, colors, AI values, chaos timing
+├── agent.py          # Agent class, movement, drawing, survival stats
+├── food.py           # Food spawning, drawing, collision, respawning
+├── ai.py             # Agent decision-making
+├── chaos.py          # Random rule-changing system
+├── ui1.py            # Separate debug window
+├── ui2.py            # Separate agent monitor window
+├── utils.py          # Small helper functions
+├── requirements.txt  # Python dependencies
+└── README.md
+```
+
+## Chaos Rules
+
+The chaos engine can apply rules such as:
+
+- Agent speed increases.
+- Agent speed decreases.
+- Food gives more energy.
+- Food gives less energy.
+- Friction changes.
+- Random movement increases.
+
+The goal is for the simulation to feel unpredictable while still being understandable.
+
+## Performance Tuning
+
+The external Tkinter UI windows are intentionally throttled so they do not drag down Pygame FPS:
 
 ```python
 UI_UPDATE_INTERVAL = 0.25
 ```
 
-If you run many agents and want more FPS, you can disable agent number labels:
+If you run many agents and want even more FPS, disable labels above agents:
 
 ```python
 SHOW_AGENT_LABELS = False
 ```
 
-## Next Steps
+You can also tune agent and food counts in `settings.py`:
+
+```python
+MIN_AGENTS = 20
+MAX_AGENTS = 20
+FOOD_COUNT = 18
+```
+
+## Current V1 Features
+
+- `800x600` arena with red boundaries and a subtle background grid.
+- Agents spawn randomly inside the playable area.
+- Food spawns only inside the reachable arena space.
+- Agents gain health and energy after eating food.
+- Food respawns after collection.
+- Agents bounce cleanly off the red boundary.
+- Stuck prevention helps agents recover from bad movement states.
+- Two external UI windows keep the main arena readable.
+
+## Next Ideas
 
 - Add death, reproduction, or scoring.
-- Tune AI values in `settings.py`.
-- Add save/load or graph history for agent performance.
+- Add graph history for agent performance.
+- Add save/load support for simulation settings.
+- Add more chaos rules and visual effects.
