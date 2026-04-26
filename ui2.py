@@ -53,16 +53,27 @@ class AgentMonitorWindow:
         )
         self.top_agent_label.pack(fill="x", padx=14, pady=(0, 10))
 
+        self.combat_summary_label = tk.Label(
+            self.window,
+            bg="#10151b",
+            fg="#aab2be",
+            font=("Arial", 10),
+            anchor="w",
+        )
+        self.combat_summary_label.pack(fill="x", padx=14, pady=(0, 10))
+
         self.list_frame = tk.Frame(self.window, bg="#10151b")
         self.list_frame.pack(fill="both", expand=True, padx=14, pady=(0, 14))
 
-    def update(self, agents):
+    def update(self, agents, combat):
         """Refresh agent leaderboard and status bars."""
         if self.closed:
             return
 
         try:
-            top_agent = max(agents, key=lambda agent: agent.energy, default=None)
+            alive_agents = [agent for agent in agents if agent.is_alive]
+            dead_agents = [agent for agent in agents if not agent.is_alive]
+            top_agent = max(alive_agents, key=lambda agent: agent.energy, default=None)
             if top_agent is None:
                 self.top_agent_label.config(text="Top energy: none")
             else:
@@ -72,8 +83,18 @@ class AgentMonitorWindow:
                         f"({top_agent.energy:.0f} energy, {top_agent.health:.0f} health)"
                     )
                 )
+            self.combat_summary_label.config(
+                text=(
+                    f"{combat.mode} | Alive {len(alive_agents)} | "
+                    f"Dead {len(dead_agents)} | Pairs {len(combat.active_pairs)}"
+                )
+            )
 
-            sorted_agents = sorted(agents, key=lambda agent: agent.energy, reverse=True)
+            sorted_agents = sorted(
+                agents,
+                key=lambda agent: (agent.is_alive, agent.kills, agent.energy),
+                reverse=True,
+            )
             active_names = {agent.name for agent in sorted_agents}
 
             for name in list(self.agent_rows):
@@ -92,7 +113,10 @@ class AgentMonitorWindow:
                 row["health"].config(width=bar_width(agent.health, MAX_AGENT_HEALTH))
                 row["energy"].config(width=bar_width(agent.energy, MAX_AGENT_ENERGY))
                 row["stats"].config(
-                    text=f"H {agent.health:5.1f}  E {agent.energy:5.1f}"
+                    text=(
+                        f"{agent_status(agent):8}  K {agent.kills:2}  "
+                        f"H {agent.health:5.1f}  E {agent.energy:5.1f}"
+                    )
                 )
 
             self.pump()
@@ -160,6 +184,17 @@ def bar_width(value, maximum):
     """Convert a stat value into a Tk label width."""
     percent = max(0, min(1, value / maximum))
     return max(1, int(percent * 24))
+
+
+def agent_status(agent):
+    """Return a compact status label for the agent monitor."""
+    if not agent.is_alive:
+        return "DEAD"
+
+    if agent.is_fighting:
+        return "FIGHT"
+
+    return "ALIVE"
 
 
 def create_agent_monitor(master=None):

@@ -8,6 +8,7 @@ import pygame
 
 from agent import spawn_agents
 from chaos import ChaosEngine
+from combat import CombatEngine
 from food import spawn_food, update_food
 from settings import (
     ARENA_RECT,
@@ -29,16 +30,22 @@ from ui1 import create_debug_window
 from ui2 import create_agent_monitor
 
 
-def update(agents, foods, arena_rect, chaos, dt):
+def update(agents, foods, arena_rect, chaos, combat, dt):
     """Update everything in the game world once per frame."""
     chaos.update(dt)
+    combat.update(agents, dt, foods, arena_rect)
+
+    if combat.food_respawn_needed:
+        foods.extend(spawn_food(arena_rect))
+        combat.food_respawn_needed = False
 
     # Each agent asks the AI for movement, then handles its own wall collisions.
     for agent in agents:
         agent.update(arena_rect, foods, chaos)
 
     # Food handles detecting when agents collect it and respawning afterward.
-    update_food(agents, foods, arena_rect, chaos)
+    if combat.can_eat_food():
+        update_food(agents, foods, arena_rect, chaos)
 
 
 def handle_events(chaos):
@@ -105,14 +112,14 @@ def create_background():
     return background
 
 
-def update_external_ui(debug_ui, agent_ui, clock, agents, foods, chaos, timer, dt):
+def update_external_ui(debug_ui, agent_ui, clock, agents, foods, chaos, combat, timer, dt):
     """Refresh slower Tkinter UI windows without dragging down Pygame FPS."""
     timer += dt
     if timer < UI_UPDATE_INTERVAL:
         return timer
 
-    debug_ui.update(clock, agents, foods, chaos)
-    agent_ui.update(agents)
+    debug_ui.update(clock, agents, foods, chaos, combat)
+    agent_ui.update(agents, combat)
     return 0
 
 
@@ -139,6 +146,7 @@ def main():
     agents = spawn_agents(arena_rect)
     foods = spawn_food(arena_rect)
     chaos = ChaosEngine()
+    combat = CombatEngine()
     debug_ui = create_debug_window(chaos.trigger_manual_rule_change)
     agent_ui = create_agent_monitor(debug_ui.root)
     ui_timer = UI_UPDATE_INTERVAL
@@ -153,7 +161,7 @@ def main():
         dt = clock.tick(FPS) / 1000
 
         # Update game objects, then draw the new frame.
-        update(agents, foods, arena_rect, chaos, dt)
+        update(agents, foods, arena_rect, chaos, combat, dt)
         draw(screen, background, agents, foods, agent_label_font)
         ui_timer = update_external_ui(
             debug_ui,
@@ -162,6 +170,7 @@ def main():
             agents,
             foods,
             chaos,
+            combat,
             ui_timer,
             dt,
         )

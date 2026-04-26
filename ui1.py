@@ -29,7 +29,7 @@ class DebugWindow:
             return
 
         self.root.title("Chaos Simulator - Debug")
-        self.root.geometry("320x260+840+80")
+        self.root.geometry("360x420+840+80")
         self.root.configure(bg="#12161e")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -42,7 +42,19 @@ class DebugWindow:
         )
         title.pack(anchor="w", padx=14, pady=(14, 8))
 
-        for key in ("fps", "agents", "food", "chaos", "next_rule", "effect"):
+        for key in (
+            "fps",
+            "agents",
+            "food",
+            "combat_mode",
+            "fight_roll",
+            "cooldown",
+            "alive_dead",
+            "fight_status",
+            "chaos",
+            "next_rule",
+            "effect",
+        ):
             label = tk.Label(
                 self.root,
                 bg="#12161e",
@@ -72,14 +84,27 @@ class DebugWindow:
         if self.on_manual_chaos is not None:
             self.on_manual_chaos()
 
-    def update(self, clock, agents, foods, chaos):
+    def update(self, clock, agents, foods, chaos, combat):
         """Refresh the debug text and keep the window responsive."""
         if self.closed:
             return
 
+        alive_count = sum(1 for agent in agents if agent.is_alive)
+        dead_count = len(agents) - alive_count
         self.labels["fps"].config(text=f"FPS: {clock.get_fps():.0f}")
         self.labels["agents"].config(text=f"Agent count: {len(agents)}")
         self.labels["food"].config(text=f"Food count: {len(foods)}")
+        self.labels["combat_mode"].config(text=f"Combat mode: {combat.mode}")
+        self.labels["fight_roll"].config(
+            text=f"Fight roll timer: {max(0, combat.fight_roll_timer):.1f}s"
+        )
+        self.labels["cooldown"].config(
+            text=f"Cooldown timer: {max(0, combat.cooldown_timer):.1f}s"
+        )
+        self.labels["alive_dead"].config(
+            text=f"Alive agents: {alive_count}    Dead agents: {dead_count}"
+        )
+        self.labels["fight_status"].config(text=f"Fight status: {fight_status(combat)}")
         self.labels["chaos"].config(text=f"Current chaos rule: {chaos.rule_name}")
         self.labels["next_rule"].config(
             text=f"Time until next rule: {max(0, int(chaos.time_until_next_rule))}s"
@@ -111,3 +136,16 @@ class DebugWindow:
 def create_debug_window(on_manual_chaos=None):
     """Create the debug window, or a disabled object if Tk is unavailable."""
     return DebugWindow(on_manual_chaos)
+
+
+def fight_status(combat):
+    """Build a short readable summary of the current combat state."""
+    if combat.mode == combat.FIGHTING:
+        pair_count = len(combat.active_pairs)
+        bye_count = len(combat.bye_agents)
+        return f"{pair_count} active pair(s), {bye_count} bye"
+
+    if combat.mode == combat.COOLDOWN:
+        return "Food restored, waiting for next roll"
+
+    return "Waiting for fight roll"

@@ -51,8 +51,8 @@ PLAYABLE_RECT = (
 )
 
 # The game will create a random number of agents within this range.
-MIN_AGENTS = 50
-MAX_AGENTS = 50
+MIN_AGENTS = 2
+MAX_AGENTS = 2
 
 # Agent drawing and movement settings.
 AGENT_RADIUS = 8
@@ -73,6 +73,33 @@ FOOD_DETECTION_RADIUS = 280
 # These small costs make agents slowly become hungry over time.
 ENERGY_DRAIN_PER_FRAME = 0.018
 HEALTH_DRAIN_WHEN_STARVING = 0.025
+
+# Combat settings.
+# Agents will only check for possible fights every few seconds, so combat does
+# not happen constantly every frame.
+FIGHT_ROLL_INTERVAL = 3
+
+# Chance that a nearby 1v1 fight starts when the fight roll happens.
+FIGHT_CHANCE = 0.35
+
+# After fighting, an agent waits this long before it can start another fight.
+FIGHT_COOLDOWN = 10
+
+# During an active fight, damage is applied on this timer instead of every
+# frame, which keeps combat readable and easier to balance.
+DAMAGE_INTERVAL = 0.5
+
+# How fast paired agents move toward each other before they start trading hits.
+COMBAT_APPROACH_SPEED = 180
+
+# How long an agent should visually flash after being hit.
+HIT_FLASH_DURATION = 0.2
+
+# How long a defeated agent stays gray before respawning somewhere else.
+RESPAWN_DELAY = 3
+
+# The smallest amount of health a successful hit can remove.
+MIN_DAMAGE = 1
 
 # Chaos rule timing and UI.
 # A new chaos rule appears after a random delay between these two values.
